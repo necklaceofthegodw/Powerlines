@@ -18,7 +18,7 @@ void UPowerlinesTool::Setup()
 {
     UScriptableModularBehaviorTool::Setup();
     
-    int CapturePriorityL =0;
+    int capturePriority =0;
 
      CanBeginClickSequence.BindDynamic(this, &UPowerlinesTool::CanBeginSequence);
     
@@ -38,7 +38,7 @@ void UPowerlinesTool::Setup()
     RequestAbortClickSequence,  
      CaptureCheck,  
     HoverCaptureCheck,  
-    CapturePriorityL,  
+    capturePriority,  
     EScriptableToolMouseButton::LeftButton);
 
     LineSet = AddLineSet();
@@ -54,11 +54,11 @@ bool UPowerlinesTool::CanBeginSequence(FInputDeviceRay ClickPos, EScriptableTool
 void UPowerlinesTool::ShowLinePreview(FInputDeviceRay ClickPos, FScriptableToolModifierStates Modifiers,
                                       EScriptableToolMouseButton MouseButton)
 {
-    FVector CursorLocationL = GetLocationUnderCursor(ClickPos);
+    FVector cursorLocation = GetLocationUnderCursor(ClickPos);
     
     if (CurrentLinePreview)
     {
-        CurrentLinePreview->SetLineEnd(CursorLocationL);
+        CurrentLinePreview->SetLineEnd(cursorLocation);
         CurrentLinePreview->SetLineColor(LinePreviewColor);
     }
 
@@ -67,14 +67,14 @@ void UPowerlinesTool::ShowLinePreview(FInputDeviceRay ClickPos, FScriptableToolM
 void UPowerlinesTool::ShowLineAndUpdatePowerlines(FInputDeviceRay ClickPos, FScriptableToolModifierStates Modifiers,
     EScriptableToolMouseButton MouseButton)
 {
-    FVector CursorLocationL = GetLocationUnderCursor(ClickPos);
-    AddLineSegment(CursorLocationL);
+    FVector cursorLocation = GetLocationUnderCursor(ClickPos);
+    AddLineSegment(cursorLocation);
 
-    FVector LineStartL, LineEndL;
-    GetLastTwoRoutePoints(LineStartL, LineEndL);
+    FVector lineStart, lineEnd;
+    GetLastTwoRoutePoints(lineStart, lineEnd);
     if (SpawnedPowerlines)
     {
-        SpawnedPowerlines->AddSplinePoints(LineStartL, LineEndL);
+        SpawnedPowerlines->AddSplinePoints(lineStart, lineEnd);
         SpawnedPowerlines->UpdatePowerlines();
     }
 }
@@ -82,19 +82,19 @@ void UPowerlinesTool::ShowLineAndUpdatePowerlines(FInputDeviceRay ClickPos, FScr
 bool UPowerlinesTool::ShowLineAndCreateOrUpdatePowerlines(FInputDeviceRay ClickPos,
     FScriptableToolModifierStates Modifiers, EScriptableToolMouseButton MouseButton)
 {
-    FVector CursorLocationL = GetLocationUnderCursor(ClickPos);
-    AddLineSegment(CursorLocationL);
+    FVector cursorLocation = GetLocationUnderCursor(ClickPos);
+    AddLineSegment(cursorLocation);
     
-    FVector LineStartL, LineEndL;
-    GetLastTwoRoutePoints(LineStartL, LineEndL);
+    FVector lineStart, lineEnd;
+    GetLastTwoRoutePoints(lineStart, lineEnd);
     if (SpawnedPowerlines)
     {
-        SpawnedPowerlines->AddSplinePoints(LineStartL, LineEndL);
+        SpawnedPowerlines->AddSplinePoints(lineStart, lineEnd);
         SpawnedPowerlines->UpdatePowerlines();
     }
     else
     {
-        SpawnedPowerlines = SpawnPowerlines(LineStartL, LineEndL);
+        SpawnedPowerlines = SpawnPowerlines(lineStart, lineEnd);
         SpawnedPowerlines->UpdatePowerlines();
     }
 
@@ -116,20 +116,20 @@ void UPowerlinesTool::RemoveLinesAndPoints(FScriptableToolModifierStates Modifie
 void UPowerlinesTool::AddLineSegment(const FVector& PositionToAdd)
 {
     SplinePoints.Add(PositionToAdd);
-    UScriptableToolPoint * PointL = PointSet->AddPoint();
+    UScriptableToolPoint * point = PointSet->AddPoint();
     
-    PointL->SetPointSize(10.0f);
-    PointL->SetPointPosition(PositionToAdd);
+    point->SetPointSize(10.0f);
+    point->SetPointPosition(PositionToAdd);
 
-    FVector OffSetPositionL = PositionToAdd + FVector(0.0f, 0.0f, 10.0f);
+    FVector offsetPosition = PositionToAdd + FVector(0.0f, 0.0f, 10.0f);
     if (CurrentLinePreview)
     {
-        CurrentLinePreview->SetLineEnd(OffSetPositionL);
+        CurrentLinePreview->SetLineEnd(offsetPosition);
         CurrentLinePreview->SetLineColor(LineLockedColor);
     }
 
     CurrentLinePreview = LineSet->AddLine();
-    CurrentLinePreview->SetLineEndPoints(OffSetPositionL,OffSetPositionL);
+    CurrentLinePreview->SetLineEndPoints(offsetPosition,offsetPosition);
     CurrentLinePreview->SetLineColor(LinePreviewColor);
     CurrentLinePreview->SetLineThickness(5.0f);
 
@@ -137,18 +137,18 @@ void UPowerlinesTool::AddLineSegment(const FVector& PositionToAdd)
 
 FVector UPowerlinesTool::GetLocationUnderCursor(FInputDeviceRay Ray) const
 {
-    UWorld* WorldL = GetWorld();
-    if (!WorldL) return  FVector::ZeroVector;
+    UWorld* world = GetWorld();
+    if (!world) return  FVector::ZeroVector;
 
-    float RayDistanceL = 1000000.0f;
-    FVector StartL = Ray.WorldRay.Origin;
-    FVector EndL = StartL + Ray.WorldRay.Direction * RayDistanceL;
-    FHitResult HitResultL;
+    float rayDistance = 1000000.0f;
+    FVector start = Ray.WorldRay.Origin;
+    FVector end = start + Ray.WorldRay.Direction * rayDistance;
+    FHitResult hitResult;
     
-    bool bHitL = WorldL->LineTraceSingleByChannel(
-        HitResultL,  
-        StartL,      
-        EndL,        
+    bool bHitL = world->LineTraceSingleByChannel(
+        hitResult,  
+        start,      
+        end,        
         ECC_Visibility, 
         FCollisionQueryParams::DefaultQueryParam, 
         FCollisionResponseParams::DefaultResponseParam 
@@ -156,32 +156,32 @@ FVector UPowerlinesTool::GetLocationUnderCursor(FInputDeviceRay Ray) const
 	
     if (bHitL)
     {
-        return HitResultL.Location;
+        return hitResult.Location;
     }
     return FVector::ZeroVector;
 }
 
 APowergrid * UPowerlinesTool::SpawnPowerlines(const FVector &SpawnLocation, const FVector &DestinationLocation) const
 {
-    float LineLengthL = FVector::Dist(SpawnLocation, DestinationLocation);
-    int PolesNumL = FMath::Floor(LineLengthL * (1/CableLength)) + 1;
+    float lineLength = FVector::Dist(SpawnLocation, DestinationLocation);
+    int poles = FMath::Floor(lineLength * (1/CableLength)) + 1;
     
-    FActorSpawnParameters SpawnParamsL;
-    SpawnParamsL.bDeferConstruction = true;
-    SpawnParamsL.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    FActorSpawnParameters spawnParams;
+    spawnParams.bDeferConstruction = true;
+    spawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
     
-    FRotator SpawnRotationL = UKismetMathLibrary::FindLookAtRotation(SpawnLocation, DestinationLocation);
+    FRotator spawnRotation = UKismetMathLibrary::FindLookAtRotation(SpawnLocation, DestinationLocation);
     
-    if (LineLengthL > CableLength)
+    if (lineLength > CableLength)
     {
-        APowergrid * SpawnedPowergridL = GetWorld()->SpawnActor<APowergrid>(APowergrid::StaticClass(),SpawnLocation, SpawnRotationL, SpawnParamsL);
+        APowergrid * spawnedPowergrid = GetWorld()->SpawnActor<APowergrid>(APowergrid::StaticClass(),SpawnLocation, spawnRotation, spawnParams);
 
-        if (SpawnedPowergridL)
+        if (spawnedPowergrid)
         {
-            SpawnedPowergridL->InitializePowerlineParams(PowerlinesMesh, PolesNumL, CableLength);
-            SpawnedPowergridL->FinishSpawning(FTransform(SpawnRotationL, SpawnLocation));
+            spawnedPowergrid->InitializePowerlineParams(PowerlinesMesh, poles, CableLength);
+            spawnedPowergrid->FinishSpawning(FTransform(spawnRotation, SpawnLocation));
         }
-        return SpawnedPowergridL;
+        return spawnedPowergrid;
     }
     
     return nullptr;

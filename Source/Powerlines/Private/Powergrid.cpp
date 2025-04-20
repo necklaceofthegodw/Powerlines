@@ -27,13 +27,13 @@ void APowergrid::OnConstruction(const FTransform& Transform)
 
 TArray<UStaticMeshComponent*> APowergrid::SpawnPowerlineMeshesAlongSpline()
 {
-	TArray<UStaticMeshComponent*> PowerlineMeshesL;
+	TArray<UStaticMeshComponent*> powerlineMeshes;
 	
 	if (bInitialPolesSpawned)
 	{
 		for (int i=0; i < Spline->GetNumberOfSplinePoints(); i++)
 		{
-			PowerlineMeshesL.Add(AddPowerlineMeshToSpline(i));
+			powerlineMeshes.Add(AddPowerlineMeshToSpline(i));
 		}
 	}
 	else
@@ -45,11 +45,11 @@ TArray<UStaticMeshComponent*> APowergrid::SpawnPowerlineMeshesAlongSpline()
 		{
 			FVector Location = GetActorLocation() + GetActorForwardVector()*CableLength*i;
 			Spline->AddSplinePoint(Location, ESplineCoordinateSpace::World);
-			PowerlineMeshesL.Add(AddPowerlineMeshToSpline(i));
+			powerlineMeshes.Add(AddPowerlineMeshToSpline(i));
 		}
 	}
 
-	return PowerlineMeshesL;
+	return powerlineMeshes;
 }
 
 void APowergrid::UpdatePowerlines()
@@ -57,27 +57,27 @@ void APowergrid::UpdatePowerlines()
 	DestroyPowerlinesAndCables();
 	PowerPoleMeshes = SpawnPowerlineMeshesAlongSpline();
 	
-	for (int i=0; i< PowerPoleMeshes.Num() - 1; i++)
+	for (int i=0; i < PowerPoleMeshes.Num() - 1; i++)
 	{
-		UStaticMeshComponent* MeshL = PowerPoleMeshes[i];
-		int MeshIndexL = i;
-		for (auto& name : MeshL->GetAllSocketNames())
+		UStaticMeshComponent* mesh = PowerPoleMeshes[i];
+		int meshIndex = i;
+		for (auto& name : mesh->GetAllSocketNames())
 		{
-			FName SocketNameL = name;
-			if (PowerPoleMeshes[MeshIndexL + 1] != nullptr )
+			FName socketName = name;
+			if (PowerPoleMeshes[meshIndex + 1] != nullptr )
 			{
-				UCableComponent* CableL = AddCableComponent(MeshL, SocketNameL);
-				Cables.Add(CableL);
+				UCableComponent* cable = AddCableComponent(mesh, socketName);
+				Cables.Add(cable);
 
 				for (auto &CableInfo: CableInfos)
 				{
-					if (CableInfo.CableSocket == SocketNameL)
+					if (CableInfo.CableSocket == socketName)
 					{
-						FVector StartPointL = GetActorTransform().InverseTransformPosition(PowerPoleMeshes[MeshIndexL]->GetSocketLocation(SocketNameL));
-						FVector EndPointL = GetActorTransform().InverseTransformPosition(PowerPoleMeshes[MeshIndexL + 1]->GetSocketLocation(SocketNameL));
-						float CableLengthL = FVector::Distance(StartPointL, EndPointL);
-						FCableInfo CableInfoL = FCableInfo(CableL, MeshIndexL, SocketNameL, CableLengthL, true, EndPointL);
-						SetCableProperties(CableInfoL);
+						FVector startPoint = GetActorTransform().InverseTransformPosition(PowerPoleMeshes[meshIndex]->GetSocketLocation(socketName));
+						FVector endPoint = GetActorTransform().InverseTransformPosition(PowerPoleMeshes[meshIndex + 1]->GetSocketLocation(socketName));
+						float cableLength = FVector::Distance(startPoint, endPoint);
+						FCableInfo cableInfo = FCableInfo(cable, meshIndex, socketName, cableLength, true, endPoint);
+						SetCableProperties(cableInfo);
 					}
 				}
 			}
@@ -94,18 +94,18 @@ void APowergrid::InitializePowerlineParams(UStaticMesh* PowerlineMeshToSet, int 
 
 void APowergrid::AddSplinePoints(const FVector& LineStart, const FVector& LineEnd)
 {
-	FVector DirectionL = (LineEnd - LineStart);
-	FVector SpawnLocationL = FVector::ZeroVector;
-	DirectionL.Normalize();
-	float LineLengthL = RemainingLineLength + FVector::Dist(LineStart, LineEnd);
-	int PolesL = FMath::TruncToInt(LineLengthL/CableLength);
+	FVector direction = (LineEnd - LineStart);
+	FVector spawnLocation = FVector::ZeroVector;
+	direction.Normalize();
+	float lineLength = RemainingLineLength + FVector::Dist(LineStart, LineEnd);
+	int poles = FMath::TruncToInt(lineLength/CableLength);
 
-	for (int i = 1; i <= PolesL; i++)
+	for (int i = 1; i <= poles; i++)
 	{
-		SpawnLocationL = LineStart - (DirectionL * RemainingLineLength) + (DirectionL * CableLength * i);
-		Spline->AddSplinePoint(SpawnLocationL, ESplineCoordinateSpace::World);
+		spawnLocation = LineStart - (direction * RemainingLineLength) + (direction * CableLength * i);
+		Spline->AddSplinePoint(spawnLocation, ESplineCoordinateSpace::World);
 	}
-	RemainingLineLength = LineLengthL - (PolesL * CableLength);
+	RemainingLineLength = lineLength - (poles * CableLength);
 }
 
 void APowergrid::DestroyPowerlinesAndCables()
@@ -126,28 +126,28 @@ void APowergrid::DestroyPowerlinesAndCables()
 
 void APowergrid::SetCableProperties(FCableInfo &CableInfoToSet)
 {
-	UCableComponent * CableL = CableInfoToSet.CableRef;
+	UCableComponent * cable = CableInfoToSet.CableRef;
 
-	CableL->bAttachEnd = true;
-	CableL->EndLocation = CableInfoToSet.EndPoint;
-	CableL->CableLength = CableInfoToSet.CableLength;
-	CableL->SolverIterations = 10;
-	CableL->bEnableStiffness = CableInfoToSet.bEnableCableStiffness;
+	cable->bAttachEnd = true;
+	cable->EndLocation = CableInfoToSet.EndPoint;
+	cable->CableLength = CableInfoToSet.CableLength;
+	cable->SolverIterations = 10;
+	cable->bEnableStiffness = CableInfoToSet.bEnableCableStiffness;
 }
 
 UCableComponent* APowergrid::AddCableComponent(UStaticMeshComponent* MeshComponent, FName AttachSocketName)
 {
-	FVector SocketLocationL = GetActorTransform().InverseTransformPosition(MeshComponent->GetSocketLocation(AttachSocketName));
+	FVector socketLocation = GetActorTransform().InverseTransformPosition(MeshComponent->GetSocketLocation(AttachSocketName));
 
-	UCableComponent* CableComponentL = NewObject<UCableComponent>(this);
-	CableComponentL->RegisterComponent();
-	CableComponentL->SetMobility(EComponentMobility::Movable);
-	CableComponentL->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	CableComponentL->SetRelativeLocation(SocketLocationL);
-	CableComponentL->AttachToComponent(Spline, FAttachmentTransformRules::KeepRelativeTransform);
-	CableComponentL->bAttachEnd = false;
+	UCableComponent* cable = NewObject<UCableComponent>(this);
+	cable->RegisterComponent();
+	cable->SetMobility(EComponentMobility::Movable);
+	cable->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	cable->SetRelativeLocation(socketLocation);
+	cable->AttachToComponent(Spline, FAttachmentTransformRules::KeepRelativeTransform);
+	cable->bAttachEnd = false;
 	
-	return CableComponentL;
+	return cable;
 }
 
 USplineMeshComponent* APowergrid::AddPowerlineMeshToSpline(int SplineIndex)
@@ -158,21 +158,21 @@ USplineMeshComponent* APowergrid::AddPowerlineMeshToSpline(int SplineIndex)
 		return nullptr;
 	}
 	
-	USplineMeshComponent* SplineMeshComponentL = NewObject<USplineMeshComponent>(this);
-	SplineMeshComponentL->RegisterComponent();
-	SplineMeshComponentL->SetMobility(EComponentMobility::Movable);
+	USplineMeshComponent* splineMesh = NewObject<USplineMeshComponent>(this);
+	splineMesh->RegisterComponent();
+	splineMesh->SetMobility(EComponentMobility::Movable);
 	
-	FVector SpawnLocationL = Spline->GetLocationAtSplinePoint(SplineIndex,ESplineCoordinateSpace::World);
-	FRotator SpawnRotatorL = Spline->GetRotationAtSplinePoint(SplineIndex,ESplineCoordinateSpace::World);
+	FVector spawnLocation = Spline->GetLocationAtSplinePoint(SplineIndex,ESplineCoordinateSpace::World);
+	FRotator spawnRotation = Spline->GetRotationAtSplinePoint(SplineIndex,ESplineCoordinateSpace::World);
 	
-	SplineMeshComponentL->SetWorldLocation(SpawnLocationL);
-	SplineMeshComponentL->SetWorldRotation(SpawnRotatorL);
-	SplineMeshComponentL->AttachToComponent(Spline, FAttachmentTransformRules::KeepWorldTransform);
-	SplineMeshComponentL->SetForwardAxis(ESplineMeshAxis::X, true);
-	SplineMeshComponentL->SetStaticMesh(PowerlineMesh);
-	SplineMeshComponentL->SetMaterial(0, PowerlineMesh->GetMaterial(0));
+	splineMesh->SetWorldLocation(spawnLocation);
+	splineMesh->SetWorldRotation(spawnRotation);
+	splineMesh->AttachToComponent(Spline, FAttachmentTransformRules::KeepWorldTransform);
+	splineMesh->SetForwardAxis(ESplineMeshAxis::X, true);
+	splineMesh->SetStaticMesh(PowerlineMesh);
+	splineMesh->SetMaterial(0, PowerlineMesh->GetMaterial(0));
 
-	return SplineMeshComponentL;
+	return splineMesh;
 }
 
 
