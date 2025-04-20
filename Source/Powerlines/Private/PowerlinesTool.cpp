@@ -61,7 +61,6 @@ void UPowerlinesTool::ShowLinePreview(FInputDeviceRay ClickPos, FScriptableToolM
         CurrentLinePreview->SetLineEnd(cursorLocation);
         CurrentLinePreview->SetLineColor(LinePreviewColor);
     }
-
 }
 
 void UPowerlinesTool::ToolFirstClick(FInputDeviceRay ClickPos, FScriptableToolModifierStates Modifiers,
@@ -79,7 +78,7 @@ bool UPowerlinesTool::ToolSubsequentClicks(FInputDeviceRay ClickPos,
     
     FVector lineStart, lineEnd;
     GetLastTwoRoutePoints(lineStart, lineEnd);
-    UE_LOG(LogTemp, Warning, TEXT("line start: %s, line end: %s"), *lineStart.ToString(), *lineEnd.ToString());
+
     if (SpawnedPowerlines)
     {
         SpawnedPowerlines->AddSplinePoints(lineStart, lineEnd);
