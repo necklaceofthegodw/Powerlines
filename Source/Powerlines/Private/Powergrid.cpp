@@ -85,6 +85,13 @@ void APowergrid::UpdatePowerlines()
 	}
 }
 
+void APowergrid::SetRemainingLineLength(float LengthToSet)
+{
+	RemainingLineLength = LengthToSet;
+	UE_LOG(LogTemp, Log, TEXT("Remaining line length: %f"), RemainingLineLength);
+
+}
+
 void APowergrid::InitializePowerlineParams(UStaticMesh* PowerlineMeshToSet, int PolesNumToSet, float CableLengthToSet)
 {
 	PowerlineMesh = PowerlineMeshToSet;
@@ -94,8 +101,23 @@ void APowergrid::InitializePowerlineParams(UStaticMesh* PowerlineMeshToSet, int 
 
 void APowergrid::AddSplinePoints(const FVector& LineStart, const FVector& LineEnd)
 {
+	// FVector direction = (LineEnd - LineStart);
+	// FVector spawnLocation = FVector::ZeroVector;
+	// direction.Normalize();
+	// SetRemainingLineLength(LineStart, LineEnd);
+	//
+	// int poles = FMath::TruncToInt(RemainingLineLength/CableLength);
+	//
+	// for (int i = 1; i <= poles; i++)
+	// {
+	// 	spawnLocation = LineStart - (direction * RemainingLineLength) + (direction * CableLength * i);
+	// 	Spline->AddSplinePoint(spawnLocation, ESplineCoordinateSpace::World);
+	// }
+	// RemainingLineLength -= (poles * CableLength);
+
 	FVector direction = (LineEnd - LineStart);
 	FVector spawnLocation = FVector::ZeroVector;
+
 	direction.Normalize();
 	float lineLength = RemainingLineLength + FVector::Dist(LineStart, LineEnd);
 	int poles = FMath::TruncToInt(lineLength/CableLength);

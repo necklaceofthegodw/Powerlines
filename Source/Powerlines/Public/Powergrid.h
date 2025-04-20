@@ -94,6 +94,9 @@ public:
 	void UpdatePowerlines();
 
 	UFUNCTION(Category = "Power Grid")
+	void SetRemainingLineLength(float LengthToSet);
+
+	UFUNCTION(Category = "Power Grid")
 	void InitializePowerlineParams(UStaticMesh* PowerlineMeshToSet, int PolesNumToSet, float CableLengthToSet);
 	
 private:

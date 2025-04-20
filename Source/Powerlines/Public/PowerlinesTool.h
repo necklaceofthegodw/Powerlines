@@ -58,10 +58,10 @@ public:
 	void ShowLinePreview(FInputDeviceRay ClickPos, FScriptableToolModifierStates Modifiers, EScriptableToolMouseButton MouseButton);
 
     UFUNCTION(Category = "Powerlines|Drawing")
-    void ShowLineAndUpdatePowerlines(FInputDeviceRay ClickPos, FScriptableToolModifierStates Modifiers, EScriptableToolMouseButton MouseButton);
+    void ToolFirstClick(FInputDeviceRay ClickPos, FScriptableToolModifierStates Modifiers, EScriptableToolMouseButton MouseButton);
 
     UFUNCTION(Category = "Powerlines|Drawing") 
-    bool ShowLineAndCreateOrUpdatePowerlines(FInputDeviceRay ClickPos, FScriptableToolModifierStates Modifiers, EScriptableToolMouseButton MouseButton);
+    bool ToolSubsequentClicks(FInputDeviceRay ClickPos, FScriptableToolModifierStates Modifiers, EScriptableToolMouseButton MouseButton);
 
     UFUNCTION(Category = "Powerlines|Drawing")
     void RemoveLinesAndPoints(FScriptableToolModifierStates Modifiers, EScriptableToolMouseButton MouseButton);
@@ -101,7 +101,7 @@ public:
     UScriptableInteractiveToolPropertySet* PowerlinesPropertySet;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Powerlines|Variables")
-    float CableLength;
+    float CableLength= 700.0f;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Powerlines|Variables")
     APowergrid* SpawnedPowerlines;

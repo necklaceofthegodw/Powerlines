@@ -25,8 +25,8 @@ void UPowerlinesTool::Setup()
      OnBeginSequencePreview.BindDynamic(this, &UPowerlinesTool::ShowLinePreview);
      OnNextSequencePreview.BindDynamic(this, &UPowerlinesTool::ShowLinePreview);
 
-     OnBeginClickSequence.BindDynamic(this, &UPowerlinesTool::ShowLineAndUpdatePowerlines);
-     OnNextSequenceClick.BindDynamic(this, &UPowerlinesTool::ShowLineAndCreateOrUpdatePowerlines);
+     OnBeginClickSequence.BindDynamic(this, &UPowerlinesTool::ToolFirstClick);
+     OnNextSequenceClick.BindDynamic(this, &UPowerlinesTool::ToolSubsequentClicks);
      OnTerminateClickSequence.BindDynamic(this, &UPowerlinesTool::RemoveLinesAndPoints);
     
     AddMultiClickSequenceBehavior(OnBeginSequencePreview,  
@@ -64,22 +64,14 @@ void UPowerlinesTool::ShowLinePreview(FInputDeviceRay ClickPos, FScriptableToolM
 
 }
 
-void UPowerlinesTool::ShowLineAndUpdatePowerlines(FInputDeviceRay ClickPos, FScriptableToolModifierStates Modifiers,
+void UPowerlinesTool::ToolFirstClick(FInputDeviceRay ClickPos, FScriptableToolModifierStates Modifiers,
     EScriptableToolMouseButton MouseButton)
 {
     FVector cursorLocation = GetLocationUnderCursor(ClickPos);
     AddLineSegment(cursorLocation);
-
-    FVector lineStart, lineEnd;
-    GetLastTwoRoutePoints(lineStart, lineEnd);
-    if (SpawnedPowerlines)
-    {
-        SpawnedPowerlines->AddSplinePoints(lineStart, lineEnd);
-        SpawnedPowerlines->UpdatePowerlines();
-    }
 }
 
-bool UPowerlinesTool::ShowLineAndCreateOrUpdatePowerlines(FInputDeviceRay ClickPos,
+bool UPowerlinesTool::ToolSubsequentClicks(FInputDeviceRay ClickPos,
     FScriptableToolModifierStates Modifiers, EScriptableToolMouseButton MouseButton)
 {
     FVector cursorLocation = GetLocationUnderCursor(ClickPos);
@@ -87,6 +79,7 @@ bool UPowerlinesTool::ShowLineAndCreateOrUpdatePowerlines(FInputDeviceRay ClickP
     
     FVector lineStart, lineEnd;
     GetLastTwoRoutePoints(lineStart, lineEnd);
+    UE_LOG(LogTemp, Warning, TEXT("line start: %s, line end: %s"), *lineStart.ToString(), *lineEnd.ToString());
     if (SpawnedPowerlines)
     {
         SpawnedPowerlines->AddSplinePoints(lineStart, lineEnd);
@@ -95,7 +88,10 @@ bool UPowerlinesTool::ShowLineAndCreateOrUpdatePowerlines(FInputDeviceRay ClickP
     else
     {
         SpawnedPowerlines = SpawnPowerlines(lineStart, lineEnd);
-        SpawnedPowerlines->UpdatePowerlines();
+        if (SpawnedPowerlines)
+        {
+            SpawnedPowerlines->UpdatePowerlines();
+        }
     }
 
     return true;
@@ -165,7 +161,7 @@ APowergrid * UPowerlinesTool::SpawnPowerlines(const FVector &SpawnLocation, cons
 {
     float lineLength = FVector::Dist(SpawnLocation, DestinationLocation);
     int poles = FMath::Floor(lineLength * (1/CableLength)) + 1;
-    
+
     FActorSpawnParameters spawnParams;
     spawnParams.bDeferConstruction = true;
     spawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
@@ -180,6 +176,10 @@ APowergrid * UPowerlinesTool::SpawnPowerlines(const FVector &SpawnLocation, cons
         {
             spawnedPowergrid->InitializePowerlineParams(PowerlinesMesh, poles, CableLength);
             spawnedPowergrid->FinishSpawning(FTransform(spawnRotation, SpawnLocation));
+            if (poles > 0)
+            {
+                spawnedPowergrid->SetRemainingLineLength(lineLength - (poles-1)*CableLength);
+            }
         }
         return spawnedPowergrid;
     }
